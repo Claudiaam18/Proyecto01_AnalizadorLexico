@@ -12,7 +12,7 @@ class Lexer:
                     "float" : r"^(0|[1-9][0-9]*)\.[0-9]+$",
                     "txt" : r"^[A-Za-z0-9_\-@%¿?¡!'\(\);\.]*$",
                     "op" : r"^[+\-*/]$",
-                    "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif)$",
+                    "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif|print)$",
                     "comp" : r"^(==|!=|<=|>=|<|>|%|\+\+|--|\+=|-=)$",
                     "esp" : r"^[@$&~¬°(){}=!]$",
                     "punt" : r"^[,:]$",
@@ -93,13 +93,6 @@ class Lexer:
             
             #Construir lexema
             lexema = ""
-
-            '''#Si encuentra ( o )
-            if i < len(self.archivo) and self.archivo[i] in ['(', ')']:
-                self.clasificarToken(self.archivo[i], linea, columna, nivelId)
-                columna += 1
-                i += 1
-                continue'''
             
             while i < len(self.archivo) and self.archivo[i] not in [' ', '\n', '\t']:
                 lexema += self.archivo[i] #Se arma lexema hasta espacio en blanco, tabulación o salto de línea
@@ -127,7 +120,8 @@ class Lexer:
                             while i < len(lexema):
                                 self.lexemaAux += lexema[i]
                                 i += 1
-
+                            self.clasificarToken(self.lexemaAux,linea, columna, identacion)
+                            self.lexemaAux = ""
                         break
                     lexemaCadena += lexema[i]
                     i += 1
@@ -174,6 +168,9 @@ class Lexer:
                 lexemaCadena += lexema[i]
                 i += 1                    
             self.lexemaAC += lexemaCadena #Para hacer la validación final
+
+            self.clasificarToken(self.lexemaAC, linea, columna, identacion)
+            self.lexemaAC = ""
 
         #Análisis si solo es un caracter
         if len(lexema) == 1:
@@ -264,7 +261,7 @@ class Lexer:
                     "identacion": identacion
                 })
             #Si el sublexema hasta ese momento es key, entonces es válido
-            elif re.fullmatch(self.token["key"], sublexema):
+            elif len(sublexema) != 0 and re.fullmatch(self.token["key"], sublexema):
                 if lexema[i] in ['(', '{']:
                     self.tokens.append({
                         "lexema": lexema[i],
@@ -464,6 +461,8 @@ class Lexer:
                 if i+1 < len(lexema) and lexema[i+1] in ['(', '{', ')', '}', '=', '!', '+', '-', '/', '*', '>', '<', ',', ':', ';']:
                     self.validarNI(sublexema, linea, columna, identacion)
                     sublexema = ''
+                if i == len(lexema) - 1:
+                    self.validarNI(sublexema, linea, columna, identacion)
             #Aumentar el contador
             i += 1
     
