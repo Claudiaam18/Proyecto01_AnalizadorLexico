@@ -1,0 +1,17 @@
+Viva = cancelled de taylor swift
+Viva=cancelled 
+ident(ficador) no valido
+ident+tifica-dor no valido
+( 1 + 5.45)  valido
+(ident(tificador)+variable) no valido
+identificador+(x*16) valido pero todo pegado
+variable++1
+variable<=otravariable
+x+y valido
+
+
+
+variable+=var  
+
+
+variable ---> id

@@ -10,7 +10,7 @@ class Lexer:
                     "id" : r"^[A-Za-z0-9_]{1,31}$",
                     "int" : r"^(0|[1-9][0-9]*)$",
                     "float" : r"^(0|[1-9][0-9]*)\.[0-9]+$",
-                    "txt" : r"^[A-Za-z0-9_\-@%¿?¡!'\(\);\.]*$",
+                    "txt" : r"^\"[A-Za-z0-9_\-@%¿?¡!'\(\);\. \t]*\"$",
                     "op" : r"^[+\-*/]$",
                     "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif|print)$",
                     "comp" : r"^(==|!=|<=|>=|<|>|%|\+\+|--|\+=|-=)$",
@@ -31,155 +31,159 @@ class Lexer:
         self.archivo  = lec.readFile()
         #lexemas = self.archivo.split() #División por espacios/saltos
 
-        i = 0
-        columna = 0 
-        linea = 0 
-        nivelId = 0
-        inicioLinea = True
+        if self.archivo == None:
+            print("Error con la lectura del archivo")
+        else:
 
-        while i < len(self.archivo):
-            c = self.archivo[i]
+            i = 0
+            columna = 0 
+            linea = 0 
+            nivelId = 0
+            inicioLinea = True
 
-            #Contar tabs al inicio de línea
-            if inicioLinea and c == '\t':
-                nivelId += 1
-                #lexema = (f"Linea - {linea}", f"col - {columna}", f"salt <Salto de linea>")
-                #self.tokens.append(lexema) #Se agrega el lexema de salto de línea
-                columna += 1
-                i += 1
-                continue
-            
-            #Si encontramos algo que no es tab
-            if inicioLinea and c not in ['\t', ' ', '\n']:
-                inicioLinea = False
-                #Ver flujo para controlar salto de línea !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            while i < len(self.archivo):
+                c = self.archivo[i]
 
-            #Nueva línea
-            if c == '\n':
+                #Contar tabs al inicio de línea
+                if inicioLinea and c == '\t':
+                    nivelId += 1
+                    #lexema = (f"Linea - {linea}", f"col - {columna}", f"salt <Salto de linea>")
+                    #self.tokens.append(lexema) #Se agrega el lexema de salto de línea
+                    columna += 1
+                    i += 1
+                    continue
+                
+                #Si encontramos algo que no es tab
+                if inicioLinea and c not in ['\t', ' ', '\n']:
+                    inicioLinea = False
+                    #Ver flujo para controlar salto de línea !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                #Primero validar si hay comentario
-                if len(self.lexemaAC) != 0 and re.fullmatch(self.token["coment"], self.lexemaAC):
-                    self.tokens.append({
-                        "lexema": self.lexemaAC,
-                        "tipo": "coment",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": nivelId
-                    })
-                    self.lexemaAC = ""
-                else:
-                    self.errores.append({
-                        "lexema": self.lexemaAC,
-                        "tipo": "ERROR",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": nivelId,
-                        "Desc" : "Comentario No Valido"
-                    })
-                    self.lexemaAC = ""
+                #Nueva línea
+                if c == '\n':
 
-                linea += 1
-                columna = 1
-                inicioLinea = True
-                nivelId = 0
-                i += 1
-                continue
+                    #Primero validar si hay comentario
+                    if len(self.lexemaAC) != 0 and re.fullmatch(self.token["coment"], self.lexemaAC):
+                        self.tokens.append({
+                            "lexema": self.lexemaAC,
+                            "tipo": "coment",
+                            "linea": linea,
+                            "columna" : columna,
+                            "identacion": nivelId
+                        })
+                        self.lexemaAC = ""
+                    else:
+                        self.errores.append({
+                            "lexema": self.lexemaAC,
+                            "tipo": "ERROR",
+                            "linea": linea,
+                            "columna" : columna,
+                            "identacion": nivelId,
+                            "Desc" : "Comentario No Valido"
+                        })
+                        self.lexemaAC = ""
 
-            #Saltar espacios
-            if c == ' ':
-                columna += 1
-                i += 1
-                continue
-            
-            #Construir lexema
-            lexema = ""
-            
-            # Manejar caracteres especiales que inician tokens
-            if i < len(self.archivo) and self.archivo[i] in ['"', "'", '#', '(', ')']:
-                lexema = self.archivo[i]
-                columna += 1
-                i += 1
-                self.clasificarToken(lexema, linea, columna, nivelId)
-                continue
+                    linea += 1
+                    columna = 1
+                    inicioLinea = True
+                    nivelId = 0
+                    i += 1
+                    continue
 
-            while i < len(self.archivo) and self.archivo[i] not in [' ', '\n', '\t', '"', "'", '#', '(', ')']:
-                lexema += self.archivo[i] #Se arma lexema hasta espacio en blanco, tabulación o salto de línea
-                columna += 1
-                i += 1
+                #Saltar espacios
+                if c == ' ':
+                    columna += 1
+                    i += 1
+                    continue
+                
+                #Construir lexema
+                lexema = ""
+                
+                # Manejar caracteres especiales que inician tokens
+                if i < len(self.archivo) and self.archivo[i] in ['(', ')']:
+                    lexema = self.archivo[i]
+                    columna += 1
+                    i += 1
+                    self.clasificarToken(lexema, linea, columna, nivelId)
+                    continue
 
-            if lexema:
-                self.clasificarToken(lexema, linea, columna, nivelId)
+                #Manejar cadenas de texto con comillas dobles
+                if i < len(self.archivo) and self.archivo[i] == '"':
+                    lexema = self.archivo[i]
+                    columna += 1
+                    i += 1
+                    while i < len(self.archivo) and self.archivo[i] != '"':
+                        lexema += self.archivo[i]
+                        columna += 1
+                        i += 1
+                    if i < len(self.archivo):  # Agregar comilla de cierre
+                        lexema += self.archivo[i]
+                        columna += 1
+                        i += 1
+                    self.clasificarToken(lexema, linea, columna, nivelId)
+                    continue
+
+                # Manejar comentarios
+                if i < len(self.archivo) and self.archivo[i] == '#':
+                    lexema = ""
+                    while i < len(self.archivo) and self.archivo[i] != '\n':
+                        lexema += self.archivo[i]
+                        columna += 1
+                        i += 1
+                    self.clasificarToken(lexema, linea, columna, nivelId)
+                    continue
+
+                #Construir un lexema normal
+                while i < len(self.archivo) and self.archivo[i] not in [' ', '\n', '\t', '"', "'", '#', '(', ')']:
+                    lexema += self.archivo[i] #Se arma lexema hasta espacio en blanco, tabulación o salto de línea
+                    columna += 1
+                    i += 1
+
+                if lexema:
+                    self.clasificarToken(lexema, linea, columna, nivelId)
 
     def clasificarToken(self, lexema, linea, columna, identacion):
         
-        #Ver si es comentario o cadena de texto
-        if len(self.lexemaAuxiliar) != 0:
-            #Cadena
-            if self.lexemaAuxiliar[0] == '"' or self.lexemaAuxiliar[0] == '\'':
-                i = 0
-                lexemaCadena = ""
-
-                #Construir todo el texto
-                while i < len(lexema):
-
-                    if lexema[i] == '"':
-                        lexemaCadena += lexema[i]
-                        i += 1
-
-                        #Terminar de leer lo que resta (si hay más)
-                        if i < len(lexema):
-                            while i < len(lexema):
-                                self.lexemaAux += lexema[i]
-                                i += 1
-                            self.clasificarToken(self.lexemaAux,linea, columna, identacion)
-                            self.lexemaAux = ""
-                        break
-
-                    lexemaCadena += lexema[i]
-                    i += 1
-                    
-                    self.lexemaAuxiliar += lexemaCadena #Para hacer la validación final
-
-            if self.lexemaAuxiliar[len(self.lexemaAuxiliar) - 1] == '"':
-                if re.fullmatch(self.token["txt"], self.lexemaAuxiliar):
-                    self.tokens.append({
-                        "lexema": self.lexemaAuxiliar,
-                        "tipo": "txt",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion
-                    })
-                    self.lexemaAuxiliar = ""
-                else:
-                    self.errores.append({
-                        "lexema": self.lexemaAuxiliar,
-                        "tipo": "ERROR",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion,
-                        "Desc" : "Texto No Valido"
-                    })
-                    self.lexemaAuxiliar = ""
-            elif self.lexemaAuxiliar[len(self.lexemaAuxiliar) - 1] == '\'':
+        # Si el lexema empieza con comilla, es texto
+        if lexema and lexema[0] == '"':
+            if re.fullmatch(self.token["txt"], lexema):
+                self.tokens.append({
+                    "lexema": lexema,
+                    "tipo": "txt",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion
+                })
+            else:
                 self.errores.append({
-                        "lexema": self.lexemaAuxiliar,
-                        "tipo": "ERROR",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion,
-                        "Desc" : "Texto No Valido por comillas simples"
-                    })
-                self.lexemaAuxiliar = ""
+                    "lexema": lexema,
+                    "tipo": "ERROR",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion,
+                    "Desc": "Texto No Valido"
+                })
+            return
         
-        #comentario
-        if len(self.lexemaAC) != 0 and self.lexemaAC[0] == '#':
-            i = 0
-            lexemaCadena = ""
-            #Construir todo el comentario
-            while i < len(lexema):        
-                lexemaCadena += lexema[i]
-                i += 1                    
-            self.lexemaAC += lexemaCadena #Para hacer la validación final
+        # Si el lexema empieza con #, es comentario
+        if lexema and lexema[0] == '#':
+            if re.fullmatch(self.token["coment"], lexema):
+                self.tokens.append({
+                    "lexema": lexema,
+                    "tipo": "coment",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion
+                })
+            else:
+                self.errores.append({
+                    "lexema": lexema,
+                    "tipo": "ERROR",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion,
+                    "Desc": "Comentario No Valido"
+                })
+            return
 
         #Análisis si solo es un caracter
         if len(lexema) == 1:
@@ -554,6 +558,7 @@ class Lexer:
         for token in self.tokens:
             print(f"Lexema - {token['lexema']}, tipo - {token['tipo']}, linea - {token['linea']}, columna - {token['columna']}, identacion - {token['identacion']}")
 
-        print("\nErrores capturados:")
-        for token in self.errores:
-            print(f"Lexema - {token['lexema']}, tipo - {token['tipo']}, linea - {token['linea']}, columna - {token['columna']}, identacion - {token['identacion']}, Descripcion - {token['Desc']}")             
+        if len(self.errores) != 0:
+            print("\nErrores capturados:")
+            for token in self.errores:
+                print(f"Lexema - {token['lexema']}, tipo - {token['tipo']}, linea - {token['linea']}, columna - {token['columna']}, identacion - {token['identacion']}, Descripcion - {token['Desc']}")             
