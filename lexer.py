@@ -12,7 +12,7 @@ class Lexer:
                     "float" : r"^(0|[1-9][0-9]*)\.[0-9]+$",
                     "txt" : r"^\"[A-Za-z0-9_\-@%¿?¡!'\(\);\. \t]*\"$",
                     "op" : r"^[+\-*/]$",
-                    "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif|print)$",
+                    "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif|print|input)$",
                     "comp" : r"^(==|!=|<=|>=|<|>|%|\+\+|--|\+=|-=)$",
                     "esp" : r"^[@$&~¬°(){}=!]$",
                     "punt" : r"^[,:]$",
@@ -62,25 +62,26 @@ class Lexer:
                 if c == '\n':
 
                     #Primero validar si hay comentario
-                    if len(self.lexemaAC) != 0 and re.fullmatch(self.token["coment"], self.lexemaAC):
-                        self.tokens.append({
-                            "lexema": self.lexemaAC,
-                            "tipo": "coment",
-                            "linea": linea,
-                            "columna" : columna,
-                            "identacion": nivelId
-                        })
-                        self.lexemaAC = ""
-                    else:
-                        self.errores.append({
-                            "lexema": self.lexemaAC,
-                            "tipo": "ERROR",
-                            "linea": linea,
-                            "columna" : columna,
-                            "identacion": nivelId,
-                            "Desc" : "Comentario No Valido"
-                        })
-                        self.lexemaAC = ""
+                    if self.lexemaAC: 
+                        if re.fullmatch(self.token["coment"], self.lexemaAC):
+                            self.tokens.append({
+                                "lexema": self.lexemaAC,
+                                "tipo": "coment",
+                                "linea": linea,
+                                "columna" : columna,
+                                "identacion": nivelId
+                            })
+                            self.lexemaAC = ""
+                        else:
+                            self.errores.append({
+                                "lexema": self.lexemaAC,
+                                "tipo": "ERROR",
+                                "linea": linea,
+                                "columna" : columna,
+                                "identacion": nivelId,
+                                "Desc" : "Comentario No Valido"
+                            })
+                            self.lexemaAC = ""
 
                     linea += 1
                     columna = 1
@@ -240,6 +241,15 @@ class Lexer:
                 "columna" : columna,
                 "identacion": identacion
             })
+        #Es comparador
+        elif re.fullmatch(self.token["comp"], c):
+            self.tokens.append({
+                "lexema": c,
+                "tipo": "comp",
+                "linea": linea,
+                "columna": columna,
+                "identacion": identacion
+            })
         #Es símbolo especial
         elif re.fullmatch(self.token["esp"], c):
             self.tokens.append({
@@ -251,7 +261,7 @@ class Lexer:
             })
         #No es nada XD
         else:
-            self.tokens.append({
+            self.errores.append({
                 "lexema": c,
                 "tipo": "Error",
                 "linea": linea,
@@ -474,15 +484,6 @@ class Lexer:
                     #Agregar un espacio para construir el texto
                     self.lexemaAuxiliar += ' '
 
-                    #Error
-                    '''self.errores.append({
-                        "lexema": lexemaCadena,
-                        "tipo": "ERROR",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion,
-                        "Desc" : "Texto No Valido por comillas simples"
-                    })'''
             #Todo pertenece a números y letras o solo números
             else:
                 sublexema += lexema[i]
@@ -554,9 +555,11 @@ class Lexer:
             })
 
     def imprimirTokens(self):
-        print("Tokens capturados:")
-        for token in self.tokens:
-            print(f"Lexema - {token['lexema']}, tipo - {token['tipo']}, linea - {token['linea']}, columna - {token['columna']}, identacion - {token['identacion']}")
+
+        if len(self.tokens) != 0:
+            print("Tokens capturados:")
+            for token in self.tokens:
+                print(f"Lexema - {token['lexema']}, tipo - {token['tipo']}, linea - {token['linea']}, columna - {token['columna']}, identacion - {token['identacion']}")
 
         if len(self.errores) != 0:
             print("\nErrores capturados:")
