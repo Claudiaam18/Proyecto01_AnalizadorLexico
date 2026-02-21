@@ -94,7 +94,15 @@ class Lexer:
             #Construir lexema
             lexema = ""
             
-            while i < len(self.archivo) and self.archivo[i] not in [' ', '\n', '\t']:
+            # Manejar caracteres especiales que inician tokens
+            if i < len(self.archivo) and self.archivo[i] in ['"', "'", '#', '(', ')']:
+                lexema = self.archivo[i]
+                columna += 1
+                i += 1
+                self.clasificarToken(lexema, linea, columna, nivelId)
+                continue
+
+            while i < len(self.archivo) and self.archivo[i] not in [' ', '\n', '\t', '"', "'", '#', '(', ')']:
                 lexema += self.archivo[i] #Se arma lexema hasta espacio en blanco, tabulación o salto de línea
                 columna += 1
                 i += 1
@@ -103,14 +111,17 @@ class Lexer:
                 self.clasificarToken(lexema, linea, columna, nivelId)
 
     def clasificarToken(self, lexema, linea, columna, identacion):
+        
         #Ver si es comentario o cadena de texto
         if len(self.lexemaAuxiliar) != 0:
             #Cadena
             if self.lexemaAuxiliar[0] == '"' or self.lexemaAuxiliar[0] == '\'':
                 i = 0
                 lexemaCadena = ""
+
                 #Construir todo el texto
                 while i < len(lexema):
+
                     if lexema[i] == '"':
                         lexemaCadena += lexema[i]
                         i += 1
@@ -123,6 +134,7 @@ class Lexer:
                             self.clasificarToken(self.lexemaAux,linea, columna, identacion)
                             self.lexemaAux = ""
                         break
+
                     lexemaCadena += lexema[i]
                     i += 1
                     
@@ -168,9 +180,6 @@ class Lexer:
                 lexemaCadena += lexema[i]
                 i += 1                    
             self.lexemaAC += lexemaCadena #Para hacer la validación final
-
-            self.clasificarToken(self.lexemaAC, linea, columna, identacion)
-            self.lexemaAC = ""
 
         #Análisis si solo es un caracter
         if len(lexema) == 1:
@@ -251,6 +260,7 @@ class Lexer:
         sublexema = ""
         i = 0
         while i < len(lexema):
+
             #Ver si es especial al inicio
             if lexema[i] in ['(', '{'] and lexema[i] == lexema[0]: #Si el caracter está en primer lugar
                 self.tokens.append({
@@ -260,18 +270,6 @@ class Lexer:
                     "columna" : columna,
                     "identacion": identacion
                 })
-            #Si el sublexema hasta ese momento es key, entonces es válido
-            elif len(sublexema) != 0 and re.fullmatch(self.token["key"], sublexema):
-                if lexema[i] in ['(', '{']:
-                    self.tokens.append({
-                        "lexema": lexema[i],
-                        "tipo": "esp",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion
-                    })
-                else:
-                    sublexema += lexema[i] #Lo va agregar a la cadena de texto para validar luego como id
 
             #Ver si es especial al final
             elif lexema[i] in [')', '}'] and lexema[i] == lexema[len(lexema) - 1]:
@@ -381,6 +379,7 @@ class Lexer:
 
                 self.lexemaAC += lexemaComent #Construir totalmente para la validación final
 
+                #Por si todo está junto
                 if re.fullmatch(self.token["coment"], lexemaComent):
                     self.tokens.append({
                         "lexema": lexemaComent,
@@ -390,7 +389,9 @@ class Lexer:
                         "identacion": identacion
                     })
                     self.lexemaAC = ""
-                break
+                
+                #Agregar un espacio para construir todo el comentario
+                self.lexemaAC += ' '
                 '''else:
                     self.errores.append({
                         "lexema": lexemaComent,
@@ -414,8 +415,17 @@ class Lexer:
                         lexemaCadena += lexema[i]
                         i += 1
 
+                    #Validar de que lo que resta del lexema se tokenice
+                    if i+1 < len(lexema):
+                        i+=1
+                        while i < len(lexema):
+                            self.lexemaAux += lexema[i]
+                        self.clasificarToken(self.lexemaAux, linea, columna, identacion)
+                        self.lexemaAux = ""
+
                     self.lexemaAuxiliar += lexemaCadena #Para hacer la validación final
 
+                    #En caso de que todo esté junto
                     if re.fullmatch(self.token["txt"], lexemaCadena):
                         self.tokens.append({
                             "lexema": lexemaCadena,
@@ -425,6 +435,9 @@ class Lexer:
                             "identacion": identacion
                         })
                         self.lexemaAuxiliar = ""
+                    
+                    #Agregar un espacio para construir el texto
+                    self.lexemaAuxiliar += ' '
                     '''else:
                         self.errores.append({
                             "lexema": lexemaCadena,
@@ -444,7 +457,18 @@ class Lexer:
                         lexemaCadena += lexema[i]
                         i += 1
                     
+                    #Validar de que lo que resta del lexema se tokenice
+                    if i+1 < len(lexema):
+                        i+=1 #Avanzar 1, para que no tome el '
+                        while i < len(lexema):
+                            self.lexemaAux += lexema[i]
+                        self.clasificarToken(self.lexemaAux, linea, columna, identacion)
+                        self.lexemaAux = ""
+
                     self.lexemaAuxiliar += lexemaCadena #Para hacer la validación final
+
+                    #Agregar un espacio para construir el texto
+                    self.lexemaAuxiliar += ' '
 
                     #Error
                     '''self.errores.append({
@@ -458,11 +482,26 @@ class Lexer:
             #Todo pertenece a números y letras o solo números
             else:
                 sublexema += lexema[i]
+
                 if i+1 < len(lexema) and lexema[i+1] in ['(', '{', ')', '}', '=', '!', '+', '-', '/', '*', '>', '<', ',', ':', ';']:
+
+                    #Tiene que ser key el sublexema para validar que el paréntesis pertenezca
+                    if re.fullmatch(self.token["key"], sublexema):
+                        if lexema[i+1] in ['(', '{']:
+                            self.validarNI(sublexema, linea, columna, identacion)
+                            self.leerCaracterI(lexema[i+1], linea, columna, identacion)
+                            i+=1
+                            sublexema = ""
+                        else:
+                            sublexema += lexema[i+1]
+                    else:
+                        #Validar sublexema antes de continuar a ver lo demás (símbolos)
+                        self.validarNI(sublexema, linea, columna, identacion)
+                        sublexema = ""
+
+                elif i == len(lexema) - 1:
                     self.validarNI(sublexema, linea, columna, identacion)
-                    sublexema = ''
-                if i == len(lexema) - 1:
-                    self.validarNI(sublexema, linea, columna, identacion)
+                    sublexema = ""
             #Aumentar el contador
             i += 1
     
