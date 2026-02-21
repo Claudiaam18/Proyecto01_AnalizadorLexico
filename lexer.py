@@ -10,7 +10,7 @@ class Lexer:
                     "id" : r"^[A-Za-z0-9_]{1,31}$",
                     "int" : r"^(0|[1-9][0-9]*)$",
                     "float" : r"^(0|[1-9][0-9]*)\.[0-9]+$",
-                    "txt" : r"^\"[A-Za-z0-9_\-@%¿?¡!'\(\);\. \t]*\"$",
+                    "txt" : r"^\"[A-Za-z0-9_\-@%¿?¡!'\(\);:\.\+= ]*\"$",
                     "op" : r"^[+\-*/]$",
                     "key" : r"^(int|float|if|else|while|return|and|switch|do|not|for|default|case|boolean|try|catch|or|main|elif|print|input)$",
                     "comp" : r"^(==|!=|<=|>=|<|>|%|\+\+|--|\+=|-=)$",
@@ -112,15 +112,39 @@ class Lexer:
                     lexema = self.archivo[i]
                     columna += 1
                     i += 1
-                    while i < len(self.archivo) and self.archivo[i] != '"':
+                    while i < len(self.archivo) and self.archivo[i] != '"' and self.archivo[i] != '\n': #Colocar la última validación para evitar bucle infinito
                         lexema += self.archivo[i]
                         columna += 1
                         i += 1
-                    if i < len(self.archivo):  # Agregar comilla de cierre
+                    if i < len(self.archivo) and self.archivo[i] == '"':  # Agregar comilla de cierre solo si la encuentra
                         lexema += self.archivo[i]
                         columna += 1
                         i += 1
                     self.clasificarToken(lexema, linea, columna, nivelId)
+                    continue
+
+                #Manejo de comillas simples
+                if i < len(self.archivo) and self.archivo[i] == "'":
+                    lexema = self.archivo[i]
+                    columna += 1
+                    i += 1
+                    while i < len(self.archivo) and self.archivo[i] != "'" and self.archivo[i] != '\n':
+                        lexema += self.archivo[i]
+                        columna += 1
+                        i += 1
+                    if i < len(self.archivo) and self.archivo[i] == "'":
+                        lexema += self.archivo[i]
+                        columna += 1
+                        i += 1
+                    # Marcar como error
+                    self.errores.append({
+                        "lexema": lexema,
+                        "tipo": "ERROR",
+                        "linea": linea,
+                        "columna": columna,
+                        "identacion": nivelId,
+                        "Desc": "Comillas simples no permitidas"
+                    })
                     continue
 
                 # Manejar comentarios
@@ -194,8 +218,17 @@ class Lexer:
             self.leerLexema(lexema, linea, columna, identacion)
 
     def leerCaracterI(self, c, linea, columna, identacion):
+        #Es número
+        if re.fullmatch(self.token["int"], c):
+            self.tokens.append({
+                "lexema": c,
+                "tipo": "int",
+                "linea": linea,
+                "columna" : columna,
+                "identacion": identacion
+            })
         #Es identificador
-        if re.fullmatch(self.token["id"], c):
+        elif re.fullmatch(self.token["id"], c):
             self.tokens.append({
                 "lexema": c,
                 "tipo": "id",
@@ -452,15 +485,7 @@ class Lexer:
                     
                     #Agregar un espacio para construir el texto
                     self.lexemaAuxiliar += ' '
-                    '''else:
-                        self.errores.append({
-                            "lexema": lexemaCadena,
-                            "tipo": "ERROR",
-                            "linea": linea,
-                            "columna" : columna,
-                            "identacion": identacion,
-                            "Desc" : "Texto No Valido"
-                        })'''
+
                 elif lexema[i] == '\'':
                     #Construir todo el texto
                     while i < len(lexema):
@@ -551,7 +576,7 @@ class Lexer:
                 "linea": linea,
                 "columna" : columna,
                 "identacion": identacion,
-                "desc" : "Lexema no valido, no sea burro"
+                "Desc" : "Lexema no valido, no sea burro"
             })
 
     def imprimirTokens(self):
