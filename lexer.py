@@ -25,6 +25,7 @@ class Lexer:
         self.lexemaAuxiliar = "" #Auxiliar para textos
         self.lexemaAux = "" #Auxiliar para id's o lo que sea (texto)
         self.lexemaAC = "" #Auxiliar para comentarios
+        self.pila = [0]
 
     def leerArchivo(self, fileName):
         lec = Lector(fileName)
@@ -45,18 +46,73 @@ class Lexer:
                 c = self.archivo[i]
 
                 #Contar tabs al inicio de línea
-                if inicioLinea and c == '\t':
-                    nivelId += 1
-                    #lexema = (f"Linea - {linea}", f"col - {columna}", f"salt <Salto de linea>")
-                    #self.tokens.append(lexema) #Se agrega el lexema de salto de línea
-                    columna += 1
-                    i += 1
-                    continue
-                
-                #Si encontramos algo que no es tab
-                if inicioLinea and c not in ['\t', ' ', '\n']:
+                if inicioLinea:
+                    contadorEspacios = 0 #si en vez de tabs usan espacios
+
+                    while i < len(self.archivo) and self.archivo[i] in ['\t', ' ']:
+                        if self.archivo[i] == '\t':
+                            nivelId += 1
+                        
+                        elif self.archivo[i] == ' ':
+                            contadorEspacios += 1
+                            if contadorEspacios == 4:# 1 tab son 4 espacios
+                                nivelId += 1
+                                contadorEspacios = 0
+                        
+                        columna += 1
+                        i += 1
+                    
                     inicioLinea = False
-                    #Ver flujo para controlar salto de línea !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    #validar el tope de indentación
+                    if nivelId > 5:
+                        self.errores.append({
+                            "lexema": "<ERROR PROFUNDIDAD>",
+                            "tipo": "ERROR",
+                            "linea": linea,
+                            "columna": columna,
+                            "identacion": nivelId,
+                            "Desc": "Se fue momia :)"
+                        })
+                        nivelId = 5
+                    
+                    #si el nivel es mayor a la última indentación que se hizo, se agrega una nueva a la pila
+                    if nivelId > self.pila[-1]:
+                        self.tokens.append({
+                            "lexema":"<INDENT>",
+                            "tipo":"INDENT",
+                            "linea":linea,
+                            "columna":columna,
+                            "identacion":nivelId
+                        })
+                        self.pila.append(nivelId)
+
+                    #si el nivel es menor al que hay en la pila
+                    elif nivelId < self.pila[-1]:
+                        #mientras la indentación exista en la pila y sea menor a la indentación ya existente, se hace detentación para cerrar el bloque
+                        while len(self.pila) > 1 and nivelId < self.pila[-1]:
+                            self.tokens.append({
+                                "lexema":"<DEDENT>",
+                                "tipo":"DEDENT",
+                                "linea":linea,
+                                "columna":columna,
+                                "identacion":0
+                            })
+                            self.pila.pop()
+
+                        #si no hay en la pila
+                        if nivelId not in self.pila:
+                            self.errores.append({
+                                "lexema":"<ERROR INDENT>",
+                                "tipo":"ERROR",
+                                "linea":linea,
+                                "columna":columna,
+                                "identacion":nivelId,
+                                "Desc":"Indentación inválida"
+                            })
+
+                    inicioLinea = False
+                    continue
 
                 #Nueva línea
                 if c == '\n':
