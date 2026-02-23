@@ -330,12 +330,29 @@ class Lexer:
             #Operador o comparador
             elif lexema[i] in ['=', '!', '+', '-', '/', '*', '>', '<']:
 
-                #Caso para ver si es comparador (doble)
-                comparador = lexema[i] #Variable de apoyo
-                if i+1 < len(lexema) and lexema[i+1] in ['=',  '!', '+', '-', '/', '*']: 
-                    comparador += lexema[i+1] #Agrega el siguiente 
+                #Validar el error de operadores
+                if i+1 < len(lexema) and lexema[i+1] in ['=', '!', '+', '-', '/', '*', '>', '<']:
+                    comparador = lexema[i] + lexema[i+1]
+                    if i+2 < len(lexema) and lexema[i+2] in ['=', '!', '+', '-', '/', '*', '>', '<']:
+                        comparador += lexema[i+2]
+                        i += 3 #Para que se pase directamente al tercer caracter
+                        #Recolectar todo los operadores
+                        while i < len(lexema) and lexema[i] in  ['=', '!', '+', '-', '/', '*', '>', '<']:
+                            comparador += lexema[i]
+                            i += 1
+                        
+                        self.errores.append({
+                            "lexema": comparador,
+                            "tipo": "ERROR",
+                            "linea": linea,
+                            "columna" : columna,
+                            "identacion": identacion,
+                            "Desc" : "Comparador con caractares excesivos"
+                        })
+                        i -= 1  # Decrementar porque el i += 1 del final lo incrementará
+                        continue
 
-                    if re.fullmatch(self.token["comp"], comparador):
+                    elif re.fullmatch(self.token["comp"], comparador):
                         self.tokens.append({
                             "lexema": comparador,
                             "tipo": "comp",
@@ -354,6 +371,7 @@ class Lexer:
                             "Desc" : "Comparador no valido"
                         })
                         i += 1
+                
                 #Caso para ver si es operador
                 elif lexema[i] in ['+', '-', '/', '*']:
 
@@ -439,15 +457,7 @@ class Lexer:
                 
                 #Agregar un espacio para construir todo el comentario
                 self.lexemaAC += ' '
-                '''else:
-                    self.errores.append({
-                        "lexema": lexemaComent,
-                        "tipo": "ERROR",
-                        "linea": linea,
-                        "columna" : columna,
-                        "identacion": identacion,
-                        "Desc" : "Comentario No Valido"
-                    })'''
+
             #Ver si es texto
             elif lexema[i] in ['"', '\'']:
                 lexemaCadena = lexema[i]
@@ -537,6 +547,42 @@ class Lexer:
     
     #Ver si es identificador o números
     def validarNI(self, sublexema, linea, columna, identacion):
+        # Validar que no sea número inválido (empieza con 0 o tiene letras después de números)
+        if sublexema and sublexema[0].isdigit():
+            if sublexema[0] == '0' and len(sublexema) > 1 and sublexema[1].isdigit():
+                self.errores.append({
+                    "lexema": sublexema,
+                    "tipo": "ERROR",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion,
+                    "Desc": "Número inválido: no puede empezar con 0"
+                })
+                return
+            # Si empieza con número pero tiene letras, es error
+            if any(c.isalpha() for c in sublexema):
+                self.errores.append({
+                    "lexema": sublexema,
+                    "tipo": "ERROR",
+                    "linea": linea,
+                    "columna": columna,
+                    "identacion": identacion,
+                    "Desc": "Identificador inválido: no puede empezar con número"
+                })
+                return
+            
+        # Validar longitud de identificador (truncar si es mayor a 31)
+        if len(sublexema) > 31 and re.match(r"^[A-Za-z0-9_]", sublexema):
+            self.errores.append({
+                "lexema": sublexema[:31],  # Truncar a 31 caracteres
+                "tipo": "ERROR",
+                "linea": linea,
+                "columna": columna,
+                "identacion": identacion,
+                "Desc": f"Identificador muy largo (original: {len(sublexema)} caracteres, truncado a 31)"
+            })
+            return
+            
         if re.fullmatch(self.token["float"], sublexema):
             self.tokens.append({
                 "lexema": sublexema,
