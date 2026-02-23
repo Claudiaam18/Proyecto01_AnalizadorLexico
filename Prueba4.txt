@@ -1,0 +1,10 @@
+main() {
+
+Print(Funcion(3,5))
+
+}
+
+Int Funcion(int a, int b)
+{
+	Return a + b
+}

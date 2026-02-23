@@ -1,0 +1,4 @@
+Print(“Hola Mundo”) 
+Print -> keyword
+() -> símbolos especiales 
+“Hola Mundo” -> cadena de texto

@@ -1,0 +1,4 @@
+int x = 5
+while(x > 2):
+ 	x = input (“Ingrese un numero”)
+print(“El numero es: “ + x)
