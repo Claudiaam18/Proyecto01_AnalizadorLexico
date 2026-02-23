@@ -63,13 +63,15 @@ op = [+ | - | * | /]
 e. Palabras clave (int, float, if, else, while, etc.). 
 key = [ int | float | if | else | while | return | and | switch | do | not | for | default | case | boolean | try | catch | or| main| elif | public | void | private] 
 f. Símbolos especiales ({}, (), ;, %. <,>, <=, >=, ==, !=, ,).
-comp  = [ == | != | <= | >= | < | > | % | ++ | -- | += | -= ]   ----> VER ESTOS CAMBIOS
+comp  = [ == | != | <= | >= | < | > | % | ++ | -- | += | -= ]
 esp = [@ | $ | & | ~ | ¬ | °| ( | ) | { | } | = | !]
-punt = [, | :|]     --------> QUITAR LOS DOS PUNTOS ---> por gramática
+punt = [, | :|]
 g. Saltos de línea e indentación
-salt = [ \n | \t | \r ]      ------------> VER LO DEL SALTO DE LÍNEA
+salt = [ \n | \t | \r ]
 h. Comentarios
 coment = # [ (A-Z) | (a-z) | (0-9) | ( _ | - | @ | % | ¿ | ? | ¡ | !) | “ “ | (; | ( | . | ) ]*
+
+En el caso de los operadores, símbolos especiales y comparadores se separaron por mayor flexibilidad
 
 
 ----- Manejo de errores -----
