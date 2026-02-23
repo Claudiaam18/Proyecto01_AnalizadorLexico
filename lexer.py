@@ -154,7 +154,8 @@ class Lexer:
                         lexema += self.archivo[i]
                         columna += 1
                         i += 1
-                    self.clasificarToken(lexema, linea, columna, nivelId)
+                    #self.clasificarToken(lexema, linea, columna, nivelId)
+                    #print("Se ignoro comentario")
                     continue
 
                 #Construir un lexema normal
@@ -444,8 +445,8 @@ class Lexer:
 
                 self.lexemaAC += lexemaComent #Construir totalmente para la validación final
 
-                #Por si todo está junto
-                if re.fullmatch(self.token["coment"], lexemaComent):
+                #Por si todo está junto - Si se quiere tokenizar 👻
+                '''if re.fullmatch(self.token["coment"], lexemaComent):
                     self.tokens.append({
                         "lexema": lexemaComent,
                         "tipo": "coment",
@@ -453,7 +454,7 @@ class Lexer:
                         "columna" : columna,
                         "identacion": identacion
                     })
-                    self.lexemaAC = ""
+                    self.lexemaAC = ""'''
                 
                 #Agregar un espacio para construir todo el comentario
                 self.lexemaAC += ' '
