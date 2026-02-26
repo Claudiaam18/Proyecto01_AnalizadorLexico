@@ -53,26 +53,136 @@ Se trabajó con el símbolo ε para validar las construcciones del código.
 ----- Expresiones regulares -----
 a. Identificadores (ID) con una longitud máxima de 31 caracteres. 
 id = [(A-Z) | (a-z) | (0-9) | _]+
+
 b. Números enteros y flotantes. 
 int = [0 | (1-9) (0-9)*] 
 Float = [0 | (1-9)(0-9)*] “.” (0-9)+ 
+
 c. Cadenas de texto.
 txt = “[(A-Z) | (a-z) | (0-9) | ( | _ | - | @ | % | ¿ | ? | ¡ | ! | ) | ‘ | ’ | (; | ( | . | ) ]*“  
+
 d. Operadores aritméticos y lógicos.
 op = [+ | - | * | /] 
+
 e. Palabras clave (int, float, if, else, while, etc.). 
 key = [ int | float | if | else | while | return | and | switch | do | not | for | default | case | boolean | try | catch | or| main| elif | public | void | private] 
+
 f. Símbolos especiales ({}, (), ;, %. <,>, <=, >=, ==, !=, ,).
 comp  = [ == | != | <= | >= | < | > | % | ++ | -- | += | -= ]
 esp = [@ | $ | & | ~ | ¬ | °| ( | ) | { | } | = | !]
 punt = [, | :|]
+
 g. Saltos de línea e indentación
 salt = [ \n | \t | \r ]
+
 h. Comentarios
 coment = # [ (A-Z) | (a-z) | (0-9) | ( _ | - | @ | % | ¿ | ? | ¡ | !) | “ “ | (; | ( | . | ) ]*
 
 En el caso de los operadores, símbolos especiales y comparadores se separaron por mayor flexibilidad
 
+Casos de prueba:
+1.	Programa que imprima “Hola mundo”
+-	El programa leerá el archivo y se espera que el resultado sea:
+Print(“Hola Mundo”) 
+Print -> keyword
+() -> símbolos especiales 
+“Hola Mundo” -> cadena de texto
+ 
+2.	Programa que realice una operación aritmética básica
+-	El programa recibirá una operación aritmética básica clasificando según su token:
+Ej: 
+int x = (45 + 2)*10/4  
+int -> keyword
+x -> Identificador
+= -> Comparador
+( -> Símbolo Especial
+45 -> Entero
++ -> Operador lógico
+2 -> Entero
+) -> Símbolo Especial 
+* -> Operador aritmético
+10 -> Entero
+/ -> Operador aritmético
+4	-> Entero
+
+3.	Un programa que demuestre el uso del input de datos y de acuerdo con la entrada del usuario decidir el flujo del programa a través de un if.
+
+Ej:
+
+int x = input (“Ingrese un numero”)
+if(x > 2):
+	print(“Es mayor”)
+else:
+	print(“Es menor”)
+
+int -> keyword
+x -> Identificador
+= -> Comparador
+input -> Keyword
+( -> Símbolo especial
+“Ingrese un numero”  Cadena de texto
+) -> Símbolo especial
+If -> Keyword
+> -> Comparador
+2 -> Entero
+: -> Puntuación
+“Es mayor” -> Cadena de texto
+else -> Keyword
+“Es menor” -> Cadena de texto
+
+4.	Definición de una función que reciba parámetros y devuelva un resultado, la función debe ser llamada desde el programa principal.
+
+Ej:
+
+main() {
+
+Print(Funcion(3,5))
+
+}
+
+Int Funcion(int a, int b)
+{
+	Return a + b
+}
+
+main -> keyword
+( -> Símbolo especial
+) -> Símbolo especial
+{ -> Símbolo especial
+Print -> Keyword
+Funcion -> ID
+3 -> int
+, -> puntuacion
+5 -> int
+} -> Símbolo especial
+Int -> keyword
+a -> ID
+b -> ID
+Return -> keyword
++ -> operador aritmético
+
+
+5.	Programa que contenga definición de variables, entrada y salida de datos, y que utilice el bucle “while”
+int x = 5
+while(x > 2):
+ 	x = input (“Ingrese un numero”)
+print(“El numero es: “ + x)
+
+int -> Keyword
+x -> Identificador
+= -> Comparador
+5 -> Entero
+while -> Keword
+( -> Símbolo Especial
+> -> Comparador
+2 -> Entero
+) -> Símbolo Especial
+: -> Símbolo Especial
+input -> Keyword
+“Ingrese un numero” -> Cadena de texto
+print -> Keyword
+“El numero es: “ -> Cadena de texto
++ -> Operador Aritmético
 
 ----- Manejo de errores -----
 El analizador léxico maneja los errores de forma controlada y detallada. Cada lexema se valida contra expresiones regulares; si no coincide, se registra como error con información sobre el lexema, la línea, la columna y el nivel de indentación. Se contemplan errores de símbolos no definidos, números inválidos, comentarios o textos mal formados, operadores incorrectos y problemas de indentación (exceso de niveles o inconsistencias en la pila). Todos los errores se almacenan en una lista y se muestran junto con los tokens válidos, lo que permite un análisis completo del archivo sin detener la ejecución.
