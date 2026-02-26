@@ -1,1 +1,27 @@
-                    print("como dijo mi ex sobra algo acá")
+#IDENTIFICADORES INVALIDOS
+identificador_muy_largo_que_supera_treinta_y_un_caracteres_totales
+
+#NUMERO INVALIDOS
+0123
+05
+5.
+.5
+5.0.1
+
+#TEXTOS INVALIDOS
+'texto con comillas simples'
+"texto sin cerrar
+"texto con * asterisco"
+"texto con | pipe"
+"texto con # numeral"
+
+#Operadores/comparadores invalidos
+**
+//
+!=!
+===
+<>
+
+#Casos especiales
+x +++ 1
+z+-*-/+++
