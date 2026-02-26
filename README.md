@@ -1,4 +1,6 @@
 # Proyecto01_AnalizadorLexico
+Tony Balán - 1202124
+Claudia Mejía - 1127224
 
 ----- Funcionamiento del proyecto -----
 En la fase #1, el analizador léxico tiene como objetivo leer un archivo de texto que contiene fragmentos de código en un lenguaje específico, en este caso Python. El programa procesa el código línea por línea, identifica cada lexema y lo clasifica en tokens utilizando expresiones regulares definidas previamente. Con apoyo de la gramática, el analizador también detecta errores que no están permitidos en el lenguaje, como símbolos no definidos, números inválidos o niveles de indentación que exceden el límite establecido. Para cada token reconocido o error encontrado, se registra su tipo, el lexema correspondiente, la posición en la línea, la columna y el nivel de indentación.
